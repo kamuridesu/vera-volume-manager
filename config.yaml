@@ -1,0 +1,28 @@
+veracrypt_path: /usr/bin/
+
+bitwarden:
+  url: http://localhost:5000
+  password_base64: a2FtdXJp
+  credential_name: volume_password
+
+volume:
+  folder: ./test
+  name: test
+  mount_point: /home/kamuri/mnt
+  size: 10M
+
+default_structure:
+  - name: common
+    children:
+      - name: images
+      - name: documents
+        children:
+          - name: pdf
+          - name: word
+          - name: excel
+          - name: powerpoint
+          - name: others
+      - name: videos
+      - name: music
+      - name: projects
+      - name: others
