@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	c.CreateFolderStructure(conf.DefaultStructure[0], conf.Volume.MountPoint)
+	c.CreateFolderStructure(conf.DefaultStructure, conf.Volume.MountPoint)
 	fmt.Println("Press enter to unmount")
 	fmt.Scanln()
 	vera.Umount()

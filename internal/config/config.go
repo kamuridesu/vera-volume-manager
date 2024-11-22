@@ -50,17 +50,17 @@ func LoadConfig() (Config, error) {
 	return config, nil
 }
 
-func CreateFolderStructure(folder Folder, parent string) {
+func CreateFolderStructure(folder []Folder, parent string) {
 	if parent == "" {
 		parent = "."
 	}
-	folderName := filepath.Join(parent, folder.Name)
-	fmt.Println("Creating folder", folderName)
-	err := os.Mkdir(folderName, 0755)
-	if err != nil {
-		fmt.Println(err)
-	}
-	for _, child := range folder.Children {
-		CreateFolderStructure(child, folderName)
+	for _, child := range folder {
+		folderName := filepath.Join(parent, child.Name)
+		fmt.Println("Creating folder", folderName)
+		err := os.Mkdir(folderName, 0755)
+		if err != nil {
+			fmt.Println(err)
+		}
+		CreateFolderStructure(child.Children, folderName)
 	}
 }
