@@ -40,6 +40,9 @@ func (b *Bitwarden) Unlock() error {
 	if err != nil {
 		return err
 	}
+	if res.StatusCode != 200 {
+		return fmt.Errorf("could not unlock session, response: %s", resBody)
+	}
 	response := map[string]interface{}{}
 	err = json.Unmarshal(resBody, &response)
 	if err != nil {
@@ -70,7 +73,7 @@ func (b *Bitwarden) Lock() error {
 	}
 	defer req.Body.Close()
 	if req.StatusCode != 200 {
-		return fmt.Errorf("could not lock session")
+		return fmt.Errorf("could not lock session, response: %s", req.Body)
 	}
 	os.Unsetenv("BW_SESSION")
 	b.Locked = true
@@ -89,6 +92,9 @@ func (b *Bitwarden) GetItem(id string) (string, error) {
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", err
+	}
+	if res.StatusCode != 200 {
+		return "", fmt.Errorf("could not get item, response: %s", resBody)
 	}
 	response := map[string]interface{}{}
 	err = json.Unmarshal(resBody, &response)
@@ -156,6 +162,9 @@ func (b *Bitwarden) ListItems() (*map[string]interface{}, error) {
 	resBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
+	}
+	if req.StatusCode != 200 {
+		return nil, fmt.Errorf("could not get item, response: %s", resBody)
 	}
 	response := map[string]interface{}{}
 	err = json.Unmarshal(resBody, &response)
