@@ -45,13 +45,6 @@ func GenerateRandomSeedFile() (*SeedFile, error) {
 	return &SeedFile{Path: seedFileName}, nil
 }
 
-func GetDriverPath(path string) string {
-	if runtime.GOOS == "windows" {
-		return path + ":\\"
-	}
-	return path
-}
-
 type Commands struct {
 	create string
 	mount  string

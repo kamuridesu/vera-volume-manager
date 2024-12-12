@@ -18,11 +18,15 @@ type Bitwarden struct {
 	Session string
 }
 
-func NewBitwarden(config c.Bitwarden) *Bitwarden {
+func NewBitwarden(config c.Bitwarden) (*Bitwarden, error) {
+	_, err := http.Head(config.Url)
+	if err != nil {
+		return nil, err
+	}
 	return &Bitwarden{
 		Config: config,
 		Locked: true,
-	}
+	}, nil
 }
 
 func (b *Bitwarden) Unlock() error {

@@ -33,8 +33,8 @@ type Config struct {
 	Bitwarden        Bitwarden `yaml:"bitwarden"`
 }
 
-func LoadConfig() (Config, error) {
-	file, err := os.Open("config.yaml")
+func LoadConfig(filename string) (Config, error) {
+	file, err := os.Open(filename)
 	if err != nil {
 		return Config{}, err
 	}

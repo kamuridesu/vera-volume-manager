@@ -15,11 +15,21 @@ type Veracrypt struct {
 	Commands *u.Commands
 }
 
-func NewVeracrypt(config c.Config) *Veracrypt {
-	return &Veracrypt{
+func NewVeracrypt(config c.Config) (*Veracrypt, error) {
+	vera := &Veracrypt{
 		Config:   config,
 		Commands: u.GetCommands(),
 	}
+	return vera.validate()
+}
+
+func (v *Veracrypt) validate() (*Veracrypt, error) {
+	for _, path := range []string{v.getManageExecutablePath(), v.getManageExecutablePath()} {
+		if _, err := os.Stat(path); err != nil {
+			return nil, err
+		}
+	}
+	return v, nil
 }
 
 func (v *Veracrypt) getCreateExecutablePath() string {
