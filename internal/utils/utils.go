@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"time"
 )
 
 func DecodeBase64String(base64String string) (string, error) {
@@ -29,6 +28,9 @@ func (s *SeedFile) Delete() error {
 }
 
 func GenerateRandomSeedFile() (*SeedFile, error) {
+	if runtime.GOOS == "windows" {
+		return &SeedFile{}, nil
+	}
 	seed := make([]byte, 64)
 	_, err := rand.Read(seed)
 	if err != nil {
@@ -36,13 +38,12 @@ func GenerateRandomSeedFile() (*SeedFile, error) {
 	}
 
 	seedHex := hex.EncodeToString(seed)
-	seedFileName := fmt.Sprintf("seed_%s.seed", time.Now().Format(time.RFC3339))
-	err = os.WriteFile(seedFileName, []byte(seedHex), 0644)
+	err = os.WriteFile("SEED.txt", []byte(seedHex), 0644)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SeedFile{Path: seedFileName}, nil
+	return &SeedFile{Path: "SEED.txt"}, nil
 }
 
 type Commands struct {
@@ -54,23 +55,23 @@ type Commands struct {
 func GetCommands() *Commands {
 	if runtime.GOOS == "windows" {
 		return &Commands{
-			create: "/create %s /password %s /hash sha512 /filesystem FAT /size %s /force",
-			mount:  "/v %s /password %s /l %s /q",
+			create: "/create %s /password %s /hash sha512 /filesystem %s /size %s /force",
+			mount:  "/v %s /l %s /password %s /q",
 			umount: "/d %s /q",
 		}
 	}
 	return &Commands{
-		create: "-t -c %s --password %s --hash sha512 --filesystem FAT --size %s --force --random-source %s --volume-type normal --encryption AES --pim 0 --keyfiles ",
+		create: "-t -c %s --password %s --hash sha512 --filesystem %s --size %s --force --random-source %s --volume-type normal --encryption AES --pim 0 --keyfiles ",
 		mount:  "-t --mount %s %s --password %s --pim 0 --protect-hidden no --slot 1 --keyfiles ",
 		umount: "-t -d %s",
 	}
 }
 
-func (c *Commands) Create(volume, password, size string, randomSource string) string {
+func (c *Commands) Create(volume, password, fs, size string, randomSource string) string {
 	if randomSource == "" {
-		return fmt.Sprintf(c.create, volume, password, size)
+		return fmt.Sprintf(c.create, volume, password, fs, size)
 	}
-	return fmt.Sprintf(c.create, volume, password, size, randomSource)
+	return fmt.Sprintf(c.create, volume, password, fs, size, randomSource)
 }
 
 func (c *Commands) Mount(volume, password, mountPoint string) string {

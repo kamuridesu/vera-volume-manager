@@ -60,11 +60,12 @@ func (v *Veracrypt) Create(password string) error {
 		}
 	}
 	targetPath := filepath.Join(v.Config.Volume.Folder, v.Config.Volume.Name)
-	command := v.Commands.Create(targetPath, password, v.Config.Volume.Size, randomFile.Path)
+	command := v.Commands.Create(targetPath, password, v.Config.Volume.FileSystem, v.Config.Volume.Size, randomFile.Path)
+	// fmt.Println(executable + " " + command)
 	if err := u.RunCommand(executable, command); err != nil {
 		return err
 	}
-	fmt.Println("Volume created at", targetPath)
+	// fmt.Println("Volume created at", targetPath)
 	return nil
 }
 
@@ -72,6 +73,7 @@ func (v *Veracrypt) Mount(password string) error {
 	executable := v.getManageExecutablePath()
 	command := v.Commands.Mount(filepath.Join(v.Config.Volume.Folder, v.Config.Volume.Name), password, v.Config.Volume.MountPoint)
 	if err := u.RunCommand(executable, command); err != nil {
+		// fmt.Println(executable + " " + command)
 		return err
 	}
 	fmt.Println("Volume mounted at", v.Config.Volume.MountPoint)

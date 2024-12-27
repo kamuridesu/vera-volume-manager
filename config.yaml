@@ -1,4 +1,4 @@
-veracrypt_path: /usr/bin/
+veracrypt_path: C:\Program Files\VeraCrypt
 
 bitwarden:
   url: http://localhost:5000
@@ -8,8 +8,9 @@ bitwarden:
 volume:
   folder: ./test
   name: test
-  mount_point: /home/kamuri/mnt
+  mount_point: Z:\
   size: 10M
+  filesystem: ExFAT
 
 default_structure:
   - name: common

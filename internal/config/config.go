@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"gopkg.in/yaml.v2"
 )
@@ -13,6 +14,7 @@ type Volume struct {
 	Name       string `yaml:"name"`
 	MountPoint string `yaml:"mount_point"`
 	Size       string `yaml:"size"`
+	FileSystem string `yaml:"filesystem"`
 }
 
 type Bitwarden struct {
@@ -45,6 +47,14 @@ func LoadConfig(filename string) (Config, error) {
 	err = decoder.Decode(&config)
 	if err != nil {
 		return Config{}, err
+	}
+
+	valid_fs := []string{"", "FAT", "ExFAT"}
+	if !slices.Contains(valid_fs, config.Volume.FileSystem) {
+		return Config{}, fmt.Errorf("variable 'filesystem' can be only FAT or ExFAT, got '%s'", config.Volume.FileSystem)
+	}
+	if config.Volume.FileSystem == "" {
+		config.Volume.FileSystem = "ExFAT"
 	}
 
 	return config, nil
