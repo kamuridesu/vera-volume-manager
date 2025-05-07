@@ -13,12 +13,12 @@ import (
 )
 
 type Bitwarden struct {
-	Config  c.Bitwarden
+	Config  *c.Bitwarden
 	Locked  bool
 	Session string
 }
 
-func NewBitwarden(config c.Bitwarden) (*Bitwarden, error) {
+func NewBitwarden(config *c.Bitwarden) (*Bitwarden, error) {
 	_, err := http.Head(config.Url)
 	if err != nil {
 		return nil, err
@@ -30,6 +30,9 @@ func NewBitwarden(config c.Bitwarden) (*Bitwarden, error) {
 }
 
 func (b *Bitwarden) Unlock() error {
+	if !b.Locked {
+		return nil
+	}
 	password, err := u.DecodeBase64String(b.Config.PasswordB64)
 	if err != nil {
 		return err
@@ -47,14 +50,14 @@ func (b *Bitwarden) Unlock() error {
 	if res.StatusCode != 200 {
 		return fmt.Errorf("could not unlock session, response: %s", resBody)
 	}
-	response := map[string]interface{}{}
+	response := map[string]any{}
 	err = json.Unmarshal(resBody, &response)
 	if err != nil {
 		return err
 	}
 	val, ok := response["data"]
 	if ok {
-		data := val.(map[string]interface{})
+		data := val.(map[string]any)
 		val, ok = data["raw"]
 		if ok {
 			b.Session = val.(string)
@@ -100,7 +103,7 @@ func (b *Bitwarden) GetItem(id string) (string, error) {
 	if res.StatusCode != 200 {
 		return "", fmt.Errorf("could not get item, response: %s", resBody)
 	}
-	response := map[string]interface{}{}
+	response := map[string]any{}
 	err = json.Unmarshal(resBody, &response)
 	if err != nil {
 		return "", err
@@ -117,16 +120,16 @@ func (b *Bitwarden) GetItemByName(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	data, ok := (*items)["data"].(map[string]interface{})
+	data, ok := (*items)["data"].(map[string]any)
 	if !ok {
 		return "", fmt.Errorf("could not find data in response")
 	}
-	iter, ok := data["data"].([]interface{})
+	iter, ok := data["data"].([]any)
 	if !ok {
 		return "", fmt.Errorf("could not find data in response")
 	}
 	for _, item := range iter {
-		itemData := item.(map[string]interface{})
+		itemData := item.(map[string]any)
 		if itemData["name"] == name {
 			password, err := b.getPassword(&itemData)
 			if err != nil {
@@ -138,8 +141,8 @@ func (b *Bitwarden) GetItemByName(name string) (string, error) {
 	return "", fmt.Errorf("could not find item with name %s", name)
 }
 
-func (b *Bitwarden) getPassword(item *map[string]interface{}) (string, error) {
-	login, ok := (*item)["login"].(map[string]interface{})
+func (b *Bitwarden) getPassword(item *map[string]any) (string, error) {
+	login, ok := (*item)["login"].(map[string]any)
 	if !ok {
 		password, ok := (*item)["notes"]
 		if !ok {
@@ -154,7 +157,7 @@ func (b *Bitwarden) getPassword(item *map[string]interface{}) (string, error) {
 	return password.(string), nil
 }
 
-func (b *Bitwarden) ListItems() (*map[string]interface{}, error) {
+func (b *Bitwarden) ListItems() (*map[string]any, error) {
 	if b.Locked {
 		return nil, fmt.Errorf("session is locked")
 	}
@@ -170,7 +173,7 @@ func (b *Bitwarden) ListItems() (*map[string]interface{}, error) {
 	if req.StatusCode != 200 {
 		return nil, fmt.Errorf("could not get item, response: %s", resBody)
 	}
-	response := map[string]interface{}{}
+	response := map[string]any{}
 	err = json.Unmarshal(resBody, &response)
 	if err != nil {
 		return nil, err

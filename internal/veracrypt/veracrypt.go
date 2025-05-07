@@ -11,11 +11,11 @@ import (
 )
 
 type Veracrypt struct {
-	Config   c.Config
+	Config   *c.Config
 	Commands *u.Commands
 }
 
-func NewVeracrypt(config c.Config) (*Veracrypt, error) {
+func NewVeracrypt(config *c.Config) (*Veracrypt, error) {
 	vera := &Veracrypt{
 		Config:   config,
 		Commands: u.GetCommands(),

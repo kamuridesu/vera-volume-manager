@@ -1,9 +1,14 @@
 veracrypt_path: /usr/bin/
 
-bitwarden:
-  url: http://localhost:5000
+# bitwarden:
+# url: http://localhost:5000
+# password_base64: a2FtdXJp
+# credential_name: volume_password
+
+keepassxc:
+  file: ~/Documents/test.kdbx
   password_base64: a2FtdXJp
-  credential_name: volume_password
+  credential_path: /login/test
 
 volume:
   folder: ./test

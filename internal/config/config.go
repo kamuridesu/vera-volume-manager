@@ -21,22 +21,29 @@ type Bitwarden struct {
 	CredentialName string `yaml:"credential_name"`
 }
 
+type Keepassxc struct {
+	File           string `yaml:"file"`
+	PasswordB64    string `yaml:"password_base64"`
+	CredentialPath string `yaml:"credential_path"`
+}
+
 type Folder struct {
-	Name     string   `yaml:"name"`
-	Children []Folder `yaml:"children"`
+	Name     string    `yaml:"name"`
+	Children *[]Folder `yaml:"children"`
 }
 
 type Config struct {
-	VeracryptPath    string    `yaml:"veracrypt_path"`
-	Volume           Volume    `yaml:"volume"`
-	DefaultStructure []Folder  `yaml:"default_structure"`
-	Bitwarden        Bitwarden `yaml:"bitwarden"`
+	VeracryptPath    string     `yaml:"veracrypt_path"`
+	Volume           *Volume    `yaml:"volume"`
+	DefaultStructure *[]Folder  `yaml:"default_structure"`
+	Bitwarden        *Bitwarden `yaml:"bitwarden"`
+	Keepassxc        *Keepassxc `yaml:"keepassxc"`
 }
 
-func LoadConfig(filename string) (Config, error) {
+func LoadConfig(filename string) (*Config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return Config{}, err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -44,17 +51,21 @@ func LoadConfig(filename string) (Config, error) {
 	config := Config{}
 	err = decoder.Decode(&config)
 	if err != nil {
-		return Config{}, err
+		return nil, err
 	}
 
-	return config, nil
+	if config.Bitwarden != nil && config.Keepassxc != nil {
+		return nil, fmt.Errorf("cannot use keepass and bitwarden at the same time")
+	}
+
+	return &config, nil
 }
 
-func CreateFolderStructure(folder []Folder, parent string) {
+func CreateFolderStructure(folder *[]Folder, parent string) {
 	if parent == "" {
 		parent = "."
 	}
-	for _, child := range folder {
+	for _, child := range *folder {
 		folderName := filepath.Join(parent, child.Name)
 		fmt.Println("Creating folder", folderName)
 		err := os.Mkdir(folderName, 0755)

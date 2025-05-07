@@ -66,7 +66,7 @@ func GetCommands() *Commands {
 	}
 }
 
-func (c *Commands) Create(volume, password, size string, randomSource string) string {
+func (c *Commands) Create(volume, password, size, randomSource string) string {
 	if randomSource == "" {
 		return fmt.Sprintf(c.create, volume, password, size)
 	}
@@ -81,7 +81,7 @@ func (c *Commands) Umount(volume string) string {
 	return fmt.Sprintf(c.umount, volume)
 }
 
-func RunCommand(executable string, command string) error {
+func RunCommand(executable, command string) error {
 	cmd := exec.Command(executable, strings.Split(command, " ")...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
