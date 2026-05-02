@@ -33,7 +33,8 @@ func debug() {
 }
 
 func printUsage() {
-	fmt.Println("Usage: vera-volume-manager <command> [options]")
+	scriptName := os.Args[0]
+	fmt.Printf("Usage: %s <command> [options]\n", scriptName)
 	fmt.Println("\nCommands:")
 	fmt.Println("  create   Creates the volume and initializes folder structure")
 	fmt.Println("  mount    Mounts the volume")
