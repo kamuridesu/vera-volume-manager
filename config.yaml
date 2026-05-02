@@ -1,16 +1,21 @@
-veracrypt_path: C:\Program Files\VeraCrypt
+veracrypt_path: /usr/bin/
 
-bitwarden:
-  url: http://localhost:5000
-  password_base64: a2FtdXJp
-  credential_name: volume_password
+secret_service:
+  service_name: test
+  username: kamuridesu
 
 volume:
   folder: ./test
   name: test
-  mount_point: Z:\
+  mount_point: /home/kamuri/mnt/veracrypt
   size: 10M
   filesystem: ExFAT
+
+hooks:
+  mount: ./script.sh .volume.mount_point
+  umount: ./script.sh .volume.mount_point
+  create: ./script.sh .volume.folder/.volume.name
+  exit_on_failed: false
 
 default_structure:
   - name: common
