@@ -2,6 +2,7 @@ package tests
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/kamuridesu/vera-volume-manager/internal/state"
@@ -29,4 +30,25 @@ func TestSaveState(t *testing.T) {
 	content, err := os.ReadFile(tmpFile.Name())
 	assert.NoError(t, err)
 	assert.Contains(t, string(content), "/my/config/path.yaml: true")
+}
+
+func TestStateNew(t *testing.T) {
+
+	tmpDir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", tmpDir)
+	t.Setenv("APPDATA", tmpDir)
+
+	s, err := state.New()
+	assert.NoError(t, err)
+	assert.NotNil(t, s)
+	assert.Empty(t, s.States)
+
+	err = s.SaveState("my-config.yaml", true)
+	assert.NoError(t, err)
+
+	s2, err := state.New()
+	assert.NoError(t, err)
+
+	absPath, _ := filepath.Abs("my-config.yaml")
+	assert.True(t, s2.States[absPath])
 }

@@ -19,7 +19,7 @@ func (s *SeedFile) Delete() error {
 	return os.Remove(s.Path)
 }
 
-func GenerateRandomSeedFile() (*SeedFile, error) {
+var GenerateRandomSeedFile = func() (*SeedFile, error) {
 	if runtime.GOOS == "windows" {
 		return &SeedFile{}, nil
 	}
@@ -74,7 +74,7 @@ func (c *Commands) Umount(volume string) string {
 	return fmt.Sprintf(c.umount, volume)
 }
 
-func RunCommand(executable string, command string) error {
+var RunCommand = func(executable string, command string) error {
 	cmd := exec.Command(executable, strings.Split(command, " ")...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -89,7 +89,7 @@ func RunCommand(executable string, command string) error {
 	return nil
 }
 
-func CreateFolder(folder string) error {
+var CreateFolder = func(folder string) error {
 	_, err := os.Stat(folder)
 	if err != nil {
 		if err := os.MkdirAll(folder, 0755); err != nil {
@@ -99,7 +99,7 @@ func CreateFolder(folder string) error {
 	return nil
 }
 
-func ExecuteHook(executable string, exitOnFail bool) error {
+var ExecuteHook = func(executable string, exitOnFail bool) error {
 	cmd := exec.Command("sh", "-c", executable)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

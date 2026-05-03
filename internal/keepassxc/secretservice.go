@@ -7,6 +7,8 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
+var KeyringGet = keyring.Get
+
 type SecretService struct {
 	Config c.SecretService
 }
@@ -16,7 +18,7 @@ func NewSecretService(config c.SecretService) *SecretService {
 }
 
 func (s *SecretService) GetItem(service string, user string) (string, error) {
-	password, err := keyring.Get(service, user)
+	password, err := KeyringGet(service, user)
 
 	if err != nil {
 		return "", fmt.Errorf("error retrieving password: %w", err)

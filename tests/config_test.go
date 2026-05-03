@@ -58,7 +58,7 @@ volume:
 func TestLoadConfig_InvalidFileSystem(t *testing.T) {
 	yamlContent := `
 volume:
-  filesystem: ext4
+  filesystem: InvalidFS
 `
 	tmpFile, err := os.CreateTemp("", "config-*.yaml")
 	assert.NoError(t, err)
@@ -66,8 +66,11 @@ volume:
 	os.WriteFile(tmpFile.Name(), []byte(yamlContent), 0644)
 
 	_, err = config.LoadConfig(tmpFile.Name())
+
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "variable 'filesystem' can be only FAT or ExFAT")
+
+	assert.Contains(t, err.Error(), "variable 'filesystem' can only be")
+	assert.Contains(t, err.Error(), "got 'InvalidFS'")
 }
 
 func TestCreateFolderStructure(t *testing.T) {
@@ -91,4 +94,21 @@ func TestCreateFolderStructure(t *testing.T) {
 
 	_, err = os.Stat(filepath.Join(tmpDir, "docs", "pdf"))
 	assert.NoError(t, err, "docs/pdf directory should exist")
+}
+
+func TestLoadConfig_FileNotFound(t *testing.T) {
+	_, err := config.LoadConfig("/path/to/nowhere.yaml")
+	assert.Error(t, err)
+}
+
+func TestLoadConfig_InvalidYaml(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "bad-*.yaml")
+	assert.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	tmpFile.Write([]byte("volume:\n\t\tbad_indentation"))
+	tmpFile.Close()
+
+	_, err = config.LoadConfig(tmpFile.Name())
+	assert.Error(t, err)
 }

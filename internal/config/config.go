@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 
@@ -58,9 +59,19 @@ func LoadConfig(filename string) (Config, error) {
 		return Config{}, err
 	}
 
-	valid_fs := []string{"", "FAT", "ExFAT"}
+	// Linux FAT, Ext2, Ext3, Ext4, NTFS, exFAT, and Btrfs
+	// Windows FAT, NTFS, ExFAT, ReFS
+	valid_fs := []string{"", "FAT", "ExFAT", "NTFS"}
+	switch runtime.GOOS {
+	case "windows":
+		valid_fs = append(valid_fs, "ReFS")
+	case "linux":
+		valid_fs = append(valid_fs, "Ext2", "Ext3", "Ext4", "Btrfs")
+	default:
+		return Config{}, fmt.Errorf("OS %s is not supported", runtime.GOOS)
+	}
 	if !slices.Contains(valid_fs, config.Volume.FileSystem) {
-		return Config{}, fmt.Errorf("variable 'filesystem' can be only FAT or ExFAT, got '%s'", config.Volume.FileSystem)
+		return Config{}, fmt.Errorf("variable 'filesystem' can only be %s, got '%s'", strings.Join(valid_fs, ", "), config.Volume.FileSystem)
 	}
 	if config.Volume.FileSystem == "" {
 		config.Volume.FileSystem = "ExFAT"
