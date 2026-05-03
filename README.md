@@ -23,16 +23,21 @@ The program uses a Yaml file to store the configuration. The file can be located
 ```yaml
 veracrypt_path: path to the veracrypt executable
 
-bitwarden:
-  url: url to the bitwarden server running with bw serve
-  password_base64: base64 encoded master password
-  credential_name: name of the credential to use
+secret_service:
+  service_name: test
+  username: user_name
 
 volume:
   folder: path to the folder where the volumes are stored
   name: name of the volume
   mount_point: path to the folder where the volume will be mounted
   size: size of the volume in MB
+
+hooks:
+  mount: ./script.sh .volume.mount_point # you can use any value from the volume section
+  umount: ./script.sh .volume.mount_point
+  create: ./script.sh .volume.folder/.volume.name
+  exit_on_failed: false
 
 default_structure:
   - name: name of the folder
