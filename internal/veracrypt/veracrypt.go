@@ -52,11 +52,6 @@ func (v *Veracrypt) getManageExecutablePath() string {
 
 func (v *Veracrypt) Create(password string) error {
 	executable := v.getCreateExecutablePath()
-	randomFile, err := u.GenerateRandomSeedFile()
-	if err != nil {
-		return fmt.Errorf("failed to generate random seed file: %w", err)
-	}
-	defer randomFile.Delete()
 	if err := u.CreateFolder(v.Config.Volume.Folder); err != nil {
 		return err
 	}
@@ -65,9 +60,10 @@ func (v *Veracrypt) Create(password string) error {
 	}
 
 	targetPath := filepath.Join(v.Config.Volume.Folder, v.Config.Volume.Name)
-	command := v.Commands.Create(targetPath, password, v.Config.Volume.FileSystem, v.Config.Volume.Size, randomFile.Path)
+	command := v.Commands.Create(targetPath, password, v.Config.Volume.FileSystem, v.Config.Volume.Size)
+	execCmd, execArgs := u.ElevateCommand(executable, command)
 	// fmt.Println(executable + " " + command)
-	if err := u.RunCommand(executable, command); err != nil {
+	if err := u.RunCommand(execCmd, execArgs); err != nil {
 		return fmt.Errorf("error running command: %w", err)
 	}
 	// fmt.Println("Volume created at", targetPath)
@@ -79,9 +75,9 @@ func (v *Veracrypt) Create(password string) error {
 func (v *Veracrypt) Mount(password string) error {
 	executable := v.getManageExecutablePath()
 	command := v.Commands.Mount(filepath.Join(v.Config.Volume.Folder, v.Config.Volume.Name), password, v.Config.Volume.MountPoint)
-	if err := u.RunCommand(executable, command); err != nil {
-		// fmt.Println(executable + " " + command)
-		return err
+	execCmd, execArgs := u.ElevateCommand(executable, command)
+	if err := u.RunCommand(execCmd, execArgs); err != nil {
+		return fmt.Errorf("error running command: %w", err)
 	}
 	v.States.SaveState(v.Config.File, true)
 
@@ -93,8 +89,9 @@ func (v *Veracrypt) Umount() error {
 	u.ExecuteHook(v.Config.Hooks.Umount, v.Config.Hooks.ExitOnFailed)
 	executable := v.getManageExecutablePath()
 	command := v.Commands.Umount(v.Config.Volume.MountPoint)
-	if err := u.RunCommand(executable, command); err != nil {
-		return err
+	execCmd, execArgs := u.ElevateCommand(executable, command)
+	if err := u.RunCommand(execCmd, execArgs); err != nil {
+		return fmt.Errorf("error running command: %w", err)
 	}
 	v.States.SaveState(v.Config.File, false)
 	return nil

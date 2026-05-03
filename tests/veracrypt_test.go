@@ -17,13 +17,11 @@ func setupVeraCryptMock(t *testing.T) (*veracrypt.Veracrypt, *[]string) {
 	origRun := utils.RunCommand
 	origHook := utils.ExecuteHook
 	origFolder := utils.CreateFolder
-	origSeed := utils.GenerateRandomSeedFile
 
 	t.Cleanup(func() {
 		utils.RunCommand = origRun
 		utils.ExecuteHook = origHook
 		utils.CreateFolder = origFolder
-		utils.GenerateRandomSeedFile = origSeed
 	})
 
 	var executedCommands []string
@@ -37,9 +35,6 @@ func setupVeraCryptMock(t *testing.T) (*veracrypt.Veracrypt, *[]string) {
 		return nil
 	}
 	utils.CreateFolder = func(folder string) error { return nil }
-	utils.GenerateRandomSeedFile = func() (*utils.SeedFile, error) {
-		return &utils.SeedFile{Path: "mock_seed.txt"}, nil
-	}
 
 	tmpFile, _ := os.CreateTemp("", "state-*.yaml")
 	defer tmpFile.Close()
@@ -106,7 +101,6 @@ func TestVeracrypt_Create(t *testing.T) {
 	assert.Contains(t, (*execLog)[0], "--password newpassword")
 	assert.Contains(t, (*execLog)[0], "ExFAT")
 	assert.Contains(t, (*execLog)[0], "10M")
-	assert.Contains(t, (*execLog)[0], "mock_seed.txt")
 
 	assert.Equal(t, "HOOK: echo created", (*execLog)[1])
 

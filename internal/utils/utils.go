@@ -1,13 +1,10 @@
 package utils
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -19,51 +16,14 @@ func (s *SeedFile) Delete() error {
 	return os.Remove(s.Path)
 }
 
-var GenerateRandomSeedFile = func() (*SeedFile, error) {
-	if runtime.GOOS == "windows" {
-		return &SeedFile{}, nil
-	}
-	seed := make([]byte, 64)
-	_, err := rand.Read(seed)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate random values from seed: %w", err)
-	}
-
-	seedHex := hex.EncodeToString(seed)
-	err = os.WriteFile("SEED.txt", []byte(seedHex), 0644)
-	if err != nil {
-		return nil, fmt.Errorf("error while saving seed file: %w", err)
-	}
-
-	return &SeedFile{Path: "SEED.txt"}, nil
-}
-
 type Commands struct {
 	create string
 	mount  string
 	umount string
 }
 
-func GetCommands() *Commands {
-	if runtime.GOOS == "windows" {
-		return &Commands{
-			create: "/create %s /password %s /hash sha512 /filesystem %s /size %s /force",
-			mount:  "/v %s /l %s /password %s /q",
-			umount: "/d %s /q",
-		}
-	}
-	return &Commands{
-		create: "-t -c %s --password %s --hash sha512 --filesystem %s --size %s --force --random-source %s --volume-type normal --encryption AES --pim 0 --keyfiles ",
-		mount:  "-t --mount %s %s --password %s --pim 0 --protect-hidden no --keyfiles ",
-		umount: "-t -d %s",
-	}
-}
-
-func (c *Commands) Create(volume, password, fs, size string, randomSource string) string {
-	if randomSource == "" {
-		return fmt.Sprintf(c.create, volume, password, fs, size)
-	}
-	return fmt.Sprintf(c.create, volume, password, fs, size, randomSource)
+func (c *Commands) Create(volume, password, fs, size string) string {
+	return fmt.Sprintf(c.create, volume, password, fs, size)
 }
 
 func (c *Commands) Mount(volume, password, mountPoint string) string {
@@ -100,6 +60,7 @@ var CreateFolder = func(folder string) error {
 }
 
 var ExecuteHook = func(executable string, exitOnFail bool) error {
+	fmt.Printf("Executing hook \"%s\"\n", executable)
 	cmd := exec.Command("sh", "-c", executable)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
