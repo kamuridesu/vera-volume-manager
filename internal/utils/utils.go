@@ -114,8 +114,11 @@ func ExecuteHook(executable string, exitOnFail bool) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	if err := cmd.Run(); err != nil {
-		slog.Error(fmt.Sprintf("hook execution failed: %v", err))
-		os.Exit(1)
+		if exitOnFail {
+			slog.Error(fmt.Sprintf("hook execution failed: %v", err))
+			os.Exit(1)
+		}
+		return fmt.Errorf("hook execution failed: %w", err)
 	}
 	return nil
 }

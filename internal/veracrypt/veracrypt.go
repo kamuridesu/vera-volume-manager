@@ -78,18 +78,17 @@ func (v *Veracrypt) Mount(password string) error {
 		// fmt.Println(executable + " " + command)
 		return err
 	}
-	fmt.Println("Volume mounted at", v.Config.Volume.MountPoint)
+
 	u.ExecuteHook(v.Config.Hooks.Mount, v.Config.Hooks.ExitOnFailed)
 	return nil
 }
 
 func (v *Veracrypt) Umount() error {
+	u.ExecuteHook(v.Config.Hooks.Umount, v.Config.Hooks.ExitOnFailed)
 	executable := v.getManageExecutablePath()
 	command := v.Commands.Umount(v.Config.Volume.MountPoint)
 	if err := u.RunCommand(executable, command); err != nil {
 		return err
 	}
-	fmt.Println("Volume unmounted")
-	u.ExecuteHook(v.Config.Hooks.Umount, v.Config.Hooks.ExitOnFailed)
 	return nil
 }
