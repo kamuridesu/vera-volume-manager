@@ -8,6 +8,7 @@ import (
 
 	c "github.com/kamuridesu/vera-volume-manager/internal/config"
 	"github.com/kamuridesu/vera-volume-manager/internal/keepassxc"
+	"github.com/kamuridesu/vera-volume-manager/internal/state"
 	v "github.com/kamuridesu/vera-volume-manager/internal/veracrypt"
 )
 
@@ -44,8 +45,9 @@ func printUsage() {
 }
 
 func bootstrap(configPath string) (c.Config, *v.Veracrypt, string) {
+	state := Check(state.New())
 	conf := Check(c.LoadConfig(configPath))
-	vera := Check(v.NewVeracrypt(conf))
+	vera := Check(v.NewVeracrypt(conf, state))
 
 	ss := keepassxc.NewSecretService(conf.SecretService)
 	password := Check(ss.GetPassword())
@@ -72,6 +74,7 @@ func main() {
 
 	umountCmd := flag.NewFlagSet("umount", flag.ExitOnError)
 	umountConfig := umountCmd.String("config", "./config.yaml", "Path to config file")
+	umountAll := umountCmd.Bool("all", false, "Umount all mounted volumes")
 
 	subcommand := os.Args[1]
 	switch subcommand {
@@ -103,8 +106,17 @@ func main() {
 	case "umount":
 		umountCmd.Parse(os.Args[2:])
 
+		state := Check(state.New())
+
+		if *umountAll {
+			fmt.Println("Umount ALL volumes...")
+			v.UmountAll(state)
+			fmt.Println("All volumes umounted")
+			return
+		}
+
 		conf := Check(c.LoadConfig(*umountConfig))
-		vera := Check(v.NewVeracrypt(conf))
+		vera := Check(v.NewVeracrypt(conf, state))
 
 		fmt.Println("Unmounting volume...")
 		CheckErr(vera.Umount())

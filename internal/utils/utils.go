@@ -2,7 +2,6 @@ package utils
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"log/slog"
@@ -11,14 +10,6 @@ import (
 	"runtime"
 	"strings"
 )
-
-func DecodeBase64String(base64String string) (string, error) {
-	data, err := base64.StdEncoding.DecodeString(base64String)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
 
 type SeedFile struct {
 	Path string
@@ -63,7 +54,7 @@ func GetCommands() *Commands {
 	}
 	return &Commands{
 		create: "-t -c %s --password %s --hash sha512 --filesystem %s --size %s --force --random-source %s --volume-type normal --encryption AES --pim 0 --keyfiles ",
-		mount:  "-t --mount %s %s --password %s --pim 0 --protect-hidden no --slot 1 --keyfiles ",
+		mount:  "-t --mount %s %s --password %s --pim 0 --protect-hidden no --keyfiles ",
 		umount: "-t -d %s",
 	}
 }

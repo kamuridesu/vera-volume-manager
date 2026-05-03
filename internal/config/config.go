@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 )
 
 type Volume struct {
@@ -41,6 +41,7 @@ type Config struct {
 	DefaultStructure []Folder      `yaml:"default_structure"`
 	SecretService    SecretService `yaml:"secret_service"`
 	Hooks            Hooks         `yaml:"hooks"`
+	File             string
 }
 
 func LoadConfig(filename string) (Config, error) {
@@ -64,6 +65,7 @@ func LoadConfig(filename string) (Config, error) {
 	if config.Volume.FileSystem == "" {
 		config.Volume.FileSystem = "ExFAT"
 	}
+	config.File = filename
 
 	replaceHookVariables(&config)
 

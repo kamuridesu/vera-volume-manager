@@ -2,23 +2,27 @@ package veracrypt
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	c "github.com/kamuridesu/vera-volume-manager/internal/config"
+	"github.com/kamuridesu/vera-volume-manager/internal/state"
 	u "github.com/kamuridesu/vera-volume-manager/internal/utils"
 )
 
 type Veracrypt struct {
 	Config   c.Config
 	Commands *u.Commands
+	States   *state.States
 }
 
-func NewVeracrypt(config c.Config) (*Veracrypt, error) {
+func NewVeracrypt(config c.Config, states *state.States) (*Veracrypt, error) {
 	vera := &Veracrypt{
 		Config:   config,
 		Commands: u.GetCommands(),
+		States:   states,
 	}
 	return vera.validate()
 }
@@ -67,6 +71,7 @@ func (v *Veracrypt) Create(password string) error {
 		return fmt.Errorf("error running command: %w", err)
 	}
 	// fmt.Println("Volume created at", targetPath)
+	v.States.SaveState(v.Config.File, false)
 	u.ExecuteHook(v.Config.Hooks.Create, v.Config.Hooks.ExitOnFailed)
 	return nil
 }
@@ -78,6 +83,7 @@ func (v *Veracrypt) Mount(password string) error {
 		// fmt.Println(executable + " " + command)
 		return err
 	}
+	v.States.SaveState(v.Config.File, true)
 
 	u.ExecuteHook(v.Config.Hooks.Mount, v.Config.Hooks.ExitOnFailed)
 	return nil
@@ -90,5 +96,29 @@ func (v *Veracrypt) Umount() error {
 	if err := u.RunCommand(executable, command); err != nil {
 		return err
 	}
+	v.States.SaveState(v.Config.File, false)
 	return nil
+}
+
+func UmountAll(s *state.States) {
+	for config, isMounted := range s.States {
+		if !isMounted {
+			continue
+		}
+		cfg, err := c.LoadConfig(config)
+		if err != nil {
+			slog.Error(fmt.Sprintf("failed to get config for %s: %s", config, err))
+			continue
+		}
+		vera, err := NewVeracrypt(cfg, s)
+		if err != nil {
+			slog.Error(fmt.Sprintf("veracrypt failed: %s", err))
+			continue
+		}
+		err = vera.Umount()
+		if err != nil {
+			slog.Error("failed to umount")
+			continue
+		}
+	}
 }
