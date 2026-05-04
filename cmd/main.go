@@ -127,5 +127,4 @@ func main() {
 		printUsage()
 		os.Exit(1)
 	}
-
 }
