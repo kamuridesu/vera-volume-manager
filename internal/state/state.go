@@ -84,3 +84,14 @@ func (s *States) SaveState(configFile string, isMounted bool) error {
 	s.States[configFile] = isMounted
 	return s.writeToFile()
 }
+
+func (s *States) GetMountedConfigs() []string {
+	mounted := []string{}
+	for state, isMounted := range s.States {
+		if isMounted {
+			mounted = append(mounted, state)
+		}
+	}
+
+	return mounted
+}

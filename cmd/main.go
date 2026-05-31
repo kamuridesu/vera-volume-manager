@@ -40,7 +40,8 @@ func printUsage() {
 	fmt.Println("  create   Creates the volume and initializes folder structure")
 	fmt.Println("  mount    Mounts the volume")
 	fmt.Println("  umount   Unmounts the volume")
-	fmt.Println("\nOptions for all commands:")
+	fmt.Println("  list     Shows all mounted volumes")
+	fmt.Println("\nOptions for all commands (except list):")
 	fmt.Println("  -config  Path to the config file (default: ./config.yaml)")
 }
 
@@ -66,15 +67,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	addConfigToCmd := func(cmd *flag.FlagSet) *string {
+		return cmd.String("config", "./config.yaml", "Path to config file")
+	}
+
 	createCmd := flag.NewFlagSet("create", flag.ExitOnError)
-	createConfig := createCmd.String("config", "./config.yaml", "Path to config file")
+	createConfig := addConfigToCmd(createCmd)
 
 	mountCmd := flag.NewFlagSet("mount", flag.ExitOnError)
-	mountConfig := mountCmd.String("config", "./config.yaml", "Path to config file")
+	mountConfig := addConfigToCmd(mountCmd)
 
 	umountCmd := flag.NewFlagSet("umount", flag.ExitOnError)
-	umountConfig := umountCmd.String("config", "./config.yaml", "Path to config file")
+	umountConfig := addConfigToCmd(umountCmd)
 	umountAll := umountCmd.Bool("all", false, "Umount all mounted volumes")
+
+	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
 
 	subcommand := os.Args[1]
 	switch subcommand {
@@ -121,6 +128,21 @@ func main() {
 		fmt.Println("Unmounting volume...")
 		CheckErr(vera.Umount())
 		fmt.Println("Volume unmounted")
+
+	case "list":
+		listCmd.Parse(os.Args[2:])
+
+		state := Check(state.New())
+		mounted := state.GetMountedConfigs()
+		if len(mounted) < 1 {
+			fmt.Println("No mounted state")
+			return
+		}
+
+		fmt.Println("Mounted configs: ")
+		for _, state := range state.GetMountedConfigs() {
+			fmt.Printf("  - %s\n", state)
+		}
 
 	default:
 		fmt.Printf("Unknown command: %s\n", subcommand)
