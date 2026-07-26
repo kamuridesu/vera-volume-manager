@@ -2,10 +2,11 @@ package utils
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/kamuridesu/vera-volume-manager/internal/config"
 )
 
 type SeedFile struct {
@@ -59,18 +60,20 @@ var CreateFolder = func(folder string) error {
 	return nil
 }
 
-var ExecuteHook = func(executable string, exitOnFail bool) error {
-	fmt.Printf("Executing hook \"%s\"\n", executable)
-	cmd := exec.Command("sh", "-c", executable)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	if err := cmd.Run(); err != nil {
-		if exitOnFail {
-			slog.Error(fmt.Sprintf("hook execution failed: %v", err))
-			os.Exit(1)
-		}
-		return fmt.Errorf("hook execution failed: %w", err)
+var ExecuteHook = func(cfg *config.Config, hookType config.HookType) error {
+	if cfg.IgnoreHooks == true {
+		fmt.Printf("Ignoring hook %s\n", string(hookType))
+		return nil
 	}
-	return nil
+
+	switch hookType {
+	case config.Create:
+		return runHook(string(cfg.Hooks.Create), cfg.Hooks.ExitOnFailed)
+	case config.Mount:
+		return runHook(string(cfg.Hooks.Mount), cfg.Hooks.ExitOnFailed)
+	case config.Umount:
+		return runHook(string(cfg.Hooks.Umount), cfg.Hooks.ExitOnFailed)
+	default:
+		return nil
+	}
 }

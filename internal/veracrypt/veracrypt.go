@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/kamuridesu/vera-volume-manager/internal/config"
 	c "github.com/kamuridesu/vera-volume-manager/internal/config"
 	"github.com/kamuridesu/vera-volume-manager/internal/state"
 	u "github.com/kamuridesu/vera-volume-manager/internal/utils"
@@ -68,7 +69,7 @@ func (v *Veracrypt) Create(password string) error {
 	}
 	// fmt.Println("Volume created at", targetPath)
 	v.States.SaveState(v.Config.File, false)
-	u.ExecuteHook(v.Config.Hooks.Create, v.Config.Hooks.ExitOnFailed)
+	u.ExecuteHook(&v.Config, config.Create)
 	return nil
 }
 
@@ -81,12 +82,12 @@ func (v *Veracrypt) Mount(password string) error {
 	}
 	v.States.SaveState(v.Config.File, true)
 
-	u.ExecuteHook(v.Config.Hooks.Mount, v.Config.Hooks.ExitOnFailed)
+	u.ExecuteHook(&v.Config, config.Mount)
 	return nil
 }
 
 func (v *Veracrypt) Umount() error {
-	u.ExecuteHook(v.Config.Hooks.Umount, v.Config.Hooks.ExitOnFailed)
+	u.ExecuteHook(&v.Config, config.Umount)
 	executable := v.getManageExecutablePath()
 	command := v.Commands.Umount(v.Config.Volume.MountPoint)
 	execCmd, execArgs := u.ElevateCommand(executable, command)
@@ -102,7 +103,7 @@ func UmountAll(s *state.States) {
 		if !isMounted {
 			continue
 		}
-		cfg, err := c.LoadConfig(config)
+		cfg, err := c.LoadConfig(config, false)
 		if err != nil {
 			slog.Error(fmt.Sprintf("failed to get config for %s: %s", config, err))
 			continue

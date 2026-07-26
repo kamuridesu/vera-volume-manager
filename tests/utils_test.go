@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kamuridesu/vera-volume-manager/internal/config"
 	"github.com/kamuridesu/vera-volume-manager/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,9 +44,21 @@ func TestRealUtils_RunCommand(t *testing.T) {
 }
 
 func TestRealUtils_ExecuteHook(t *testing.T) {
-	err := utils.ExecuteHook("echo 'hook works'", false)
+	successCfg := &config.Config{
+		Hooks: config.Hooks{
+			Create:       "echo 'hook works'",
+			ExitOnFailed: false,
+		},
+	}
+	err := utils.ExecuteHook(successCfg, config.Create)
 	assert.NoError(t, err)
 
-	err = utils.ExecuteHook("false", false)
+	failCfg := &config.Config{
+		Hooks: config.Hooks{
+			Create:       "false",
+			ExitOnFailed: false,
+		},
+	}
+	err = utils.ExecuteHook(failCfg, config.Create)
 	assert.Error(t, err, "Should fail when command fails")
 }

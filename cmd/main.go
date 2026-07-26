@@ -13,10 +13,7 @@ import (
 )
 
 func Check[T any](x T, err error) T {
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
-	}
+	CheckErr(err)
 	return x
 }
 
@@ -43,11 +40,12 @@ func printUsage() {
 	fmt.Println("  list     Shows all mounted volumes")
 	fmt.Println("\nOptions for all commands (except list):")
 	fmt.Println("  -config  Path to the config file (default: ./config.yaml)")
+	fmt.Println("  -nohook  Disables hooks after mounting/umounting")
 }
 
-func bootstrap(configPath string) (c.Config, *v.Veracrypt, string) {
+func bootstrap(configPath string, ignoreHooks bool) (c.Config, *v.Veracrypt, string) {
 	state := Check(state.New())
-	conf := Check(c.LoadConfig(configPath))
+	conf := Check(c.LoadConfig(configPath, ignoreHooks))
 	vera := Check(v.NewVeracrypt(conf, state))
 
 	ss := keepassxc.NewSecretService(conf.SecretService)
@@ -71,15 +69,22 @@ func main() {
 		return cmd.String("config", "./config.yaml", "Path to config file")
 	}
 
+	addNoHookToCmd := func(cmd *flag.FlagSet) *bool {
+		return cmd.Bool("nohook", false, "Ignores create/mount/umount hooks")
+	}
+
 	createCmd := flag.NewFlagSet("create", flag.ExitOnError)
 	createConfig := addConfigToCmd(createCmd)
+	createNoHook := addNoHookToCmd(createCmd)
 
 	mountCmd := flag.NewFlagSet("mount", flag.ExitOnError)
 	mountConfig := addConfigToCmd(mountCmd)
+	mountNoHook := addNoHookToCmd(mountCmd)
 
 	umountCmd := flag.NewFlagSet("umount", flag.ExitOnError)
 	umountConfig := addConfigToCmd(umountCmd)
 	umountAll := umountCmd.Bool("all", false, "Umount all mounted volumes")
+	umountNoHook := addNoHookToCmd(umountCmd)
 
 	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
 
@@ -88,7 +93,7 @@ func main() {
 
 	case "create":
 		createCmd.Parse(os.Args[2:])
-		conf, vera, password := bootstrap(*createConfig)
+		conf, vera, password := bootstrap(*createConfig, *createNoHook)
 
 		fmt.Println("Creating volume...")
 		CheckErr(vera.Create(password))
@@ -104,7 +109,7 @@ func main() {
 
 	case "mount":
 		mountCmd.Parse(os.Args[2:])
-		_, vera, password := bootstrap(*mountConfig)
+		_, vera, password := bootstrap(*mountConfig, *mountNoHook)
 
 		fmt.Println("Mounting volume...")
 		CheckErr(vera.Mount(password))
@@ -122,7 +127,7 @@ func main() {
 			return
 		}
 
-		conf := Check(c.LoadConfig(*umountConfig))
+		conf := Check(c.LoadConfig(*umountConfig, *umountNoHook))
 		vera := Check(v.NewVeracrypt(conf, state))
 
 		fmt.Println("Unmounting volume...")

@@ -30,10 +30,23 @@ func setupVeraCryptMock(t *testing.T) (*veracrypt.Veracrypt, *[]string) {
 		executedCommands = append(executedCommands, executable+" "+command)
 		return nil
 	}
-	utils.ExecuteHook = func(executable string, exitOnFail bool) error {
-		executedCommands = append(executedCommands, "HOOK: "+executable)
+
+	utils.ExecuteHook = func(cfg *config.Config, hookType config.HookType) error {
+		var cmd string
+		switch hookType {
+		case config.Create:
+			cmd = string(cfg.Hooks.Create)
+		case config.Mount:
+			cmd = string(cfg.Hooks.Mount)
+		case config.Umount:
+			cmd = string(cfg.Hooks.Umount)
+		default:
+			cmd = string(hookType)
+		}
+		executedCommands = append(executedCommands, "HOOK: "+cmd)
 		return nil
 	}
+
 	utils.CreateFolder = func(folder string) error { return nil }
 
 	tmpFile, _ := os.CreateTemp("", "state-*.yaml")

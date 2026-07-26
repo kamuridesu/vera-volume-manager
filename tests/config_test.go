@@ -29,12 +29,12 @@ hooks:
 	assert.NoError(t, err)
 	tmpFile.Close()
 
-	cfg, err := config.LoadConfig(tmpFile.Name())
+	cfg, err := config.LoadConfig(tmpFile.Name(), false)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "/usr/bin/", cfg.VeracryptPath)
 	assert.Equal(t, "FAT", cfg.Volume.FileSystem)
-	assert.Equal(t, "echo \"creating test-vol\"", cfg.Hooks.Create, "Hook variable should be replaced")
+	assert.Equal(t, "echo \"creating test-vol\"", string(cfg.Hooks.Create), "Hook variable should be replaced")
 }
 
 func TestLoadConfig_DefaultFileSystem(t *testing.T) {
@@ -49,7 +49,7 @@ volume:
 
 	os.WriteFile(tmpFile.Name(), []byte(yamlContent), 0644)
 
-	cfg, err := config.LoadConfig(tmpFile.Name())
+	cfg, err := config.LoadConfig(tmpFile.Name(), false)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "ExFAT", cfg.Volume.FileSystem, "Empty filesystem should default to ExFAT")
@@ -65,7 +65,7 @@ volume:
 	defer os.Remove(tmpFile.Name())
 	os.WriteFile(tmpFile.Name(), []byte(yamlContent), 0644)
 
-	_, err = config.LoadConfig(tmpFile.Name())
+	_, err = config.LoadConfig(tmpFile.Name(), false)
 
 	assert.Error(t, err)
 
@@ -97,7 +97,7 @@ func TestCreateFolderStructure(t *testing.T) {
 }
 
 func TestLoadConfig_FileNotFound(t *testing.T) {
-	_, err := config.LoadConfig("/path/to/nowhere.yaml")
+	_, err := config.LoadConfig("/path/to/nowhere.yaml", false)
 	assert.Error(t, err)
 }
 
@@ -109,6 +109,6 @@ func TestLoadConfig_InvalidYaml(t *testing.T) {
 	tmpFile.Write([]byte("volume:\n\t\tbad_indentation"))
 	tmpFile.Close()
 
-	_, err = config.LoadConfig(tmpFile.Name())
+	_, err = config.LoadConfig(tmpFile.Name(), false)
 	assert.Error(t, err)
 }

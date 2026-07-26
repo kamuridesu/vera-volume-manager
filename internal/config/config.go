@@ -10,6 +10,14 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
+type HookType string
+
+const (
+	Create HookType = "create"
+	Mount  HookType = "mount"
+	Umount HookType = "umount"
+)
+
 type Volume struct {
 	Folder     string `yaml:"folder"`
 	Name       string `yaml:"name"`
@@ -42,9 +50,10 @@ type Config struct {
 	SecretService    SecretService `yaml:"secret_service"`
 	Hooks            Hooks         `yaml:"hooks"`
 	File             string
+	IgnoreHooks      bool
 }
 
-func LoadConfig(filename string) (Config, error) {
+func LoadConfig(filename string, ignoreHooks bool) (Config, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return Config{}, err
@@ -63,14 +72,16 @@ func LoadConfig(filename string) (Config, error) {
 		return Config{}, err
 	}
 
+	if config.Volume.FileSystem == "" {
+		config.Volume.FileSystem = "ExFAT"
+	}
+
 	if !slices.Contains(valid_fs, config.Volume.FileSystem) {
 		return Config{}, fmt.Errorf("variable 'filesystem' can only be %s, got '%s'", strings.Join(valid_fs, ", "), config.Volume.FileSystem)
 	}
 
-	if config.Volume.FileSystem == "" {
-		config.Volume.FileSystem = "ExFAT"
-	}
 	config.File = filename
+	config.IgnoreHooks = ignoreHooks
 
 	replaceHookVariables(&config)
 
@@ -79,12 +90,12 @@ func LoadConfig(filename string) (Config, error) {
 
 func replaceHookVariables(config *Config) {
 	replacements := map[string]string{
-		".volume.folder":      config.Volume.Folder,
+		".volume.folder":      filepath.Clean(config.Volume.Folder),
 		".volume.name":        config.Volume.Name,
-		".volume.mount_point": config.Volume.MountPoint,
+		".volume.mount_point": filepath.Clean(config.Volume.MountPoint),
 		".volume.size":        config.Volume.Size,
 		".volume.filesystem":  config.Volume.FileSystem,
-		".veracrypt_path":     config.VeracryptPath,
+		".veracrypt_path":     filepath.Clean(config.VeracryptPath),
 	}
 
 	replace := func(cmd string) string {
@@ -107,7 +118,7 @@ func CreateFolderStructure(folder []Folder, parent string) {
 	for _, child := range folder {
 		folderName := filepath.Join(parent, child.Name)
 		fmt.Println("Creating folder", folderName)
-		err := os.Mkdir(folderName, 0755)
+		err := os.MkdirAll(folderName, 0755)
 		if err != nil {
 			fmt.Println(err)
 		}

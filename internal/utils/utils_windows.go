@@ -2,6 +2,13 @@
 
 package utils
 
+import (
+	"fmt"
+	"log/slog"
+	"os"
+	"os/exec"
+)
+
 func GetCommands() *Commands {
 	return &Commands{
 		create: "/create %s /password %s /hash sha512 /filesystem %s /size %s /force",
@@ -12,4 +19,25 @@ func GetCommands() *Commands {
 
 func ElevateCommand(executable string, command string) (string, string) {
 	return executable, command
+}
+
+func runHook(executable string, exitOnFail bool) error {
+	if executable == "" {
+		return nil
+	}
+	fmt.Printf("Executing hook \"%s\"\n", executable)
+
+	cmd := exec.Command("cmd.exe", "/C", executable)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	if err := cmd.Run(); err != nil {
+		if exitOnFail {
+			slog.Error(fmt.Sprintf("hook execution failed: %v", err))
+			os.Exit(1)
+		}
+		return fmt.Errorf("hook execution failed: %w", err)
+	}
+	return nil
 }
